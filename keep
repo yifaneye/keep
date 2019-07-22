@@ -1,0 +1,234 @@
+<?php
+	
+	$privateKey = 1;
+
+	echo "\n------Keep Password Keyrect------\n";
+	echo "          Version 1.0.1\n";
+	echo "Enter key: ";
+	$key = getKey();
+	if ($key != $privateKey) {
+		echo "     (Incorrect key)\n";
+		echo "---------------------------------\n\n";
+		exit;
+	}
+
+	$dbh = new PDO('pgsql:host=localhost;dbname=keep');
+
+	echo "      (Keyrect!! Welcome!!)\n";
+
+	while (1) {
+		
+		echo "\n     [keep|kept|change|kill]\n";
+		$command = readline ("  Command: ");
+		$command = strtolower($command);
+		
+		if ($command == "keep") {
+			$name = readline("  Account: ");
+			$name = strtolower($name);
+			if ($name == '') {
+				$pass = generatePass();
+				echo " Password: $pass\n";
+			} else {
+				$count = showPass($dbh, $name);
+				if ($count == 0) {
+					$pass = generatePass();
+					insertPass($dbh, $name, $pass);
+					echo " Password: $pass\n";
+				} else {
+					echo "     (Password already existed for \"$name\")\n";
+				}
+			}
+		}
+
+		elseif ($command == "kept") {
+			$name = readline("  Account: ");
+			$name = strtolower($name);
+			if ($name == '') {
+				$count = showPasses($dbh);
+				if ($count == 0) 
+					echo "     (Can not find any password)\n";
+			} else {
+				$count = showPass($dbh, $name);
+				if ($count == 0)
+					echo "     (Can not find password for \"$name\")\n";
+			}
+		}
+
+		elseif ($command == "change") {
+			$name = readline("  Account: ");
+			$name = strtolower($name);
+			if ($name == '') {
+				echo "  Old key: ";
+				$oldKey = getKey();
+				if ($oldKey == $privateKey) {
+					$newKey1 = readline("  New key: ");
+					$newKey2 = readline("  Confirm: ");
+					if ($newKey1 == $newKey2) {
+						updatePasses($dbh);
+						$privateKey = $newKey1;
+						echo "     (Updated your key and all passwords)\n";
+					} else
+						echo "     (Inputs do not match)\n";
+				} else
+					echo "     (Incorrect private key)\n";
+			} else {
+				$count = showPass($dbh, $name);
+				if ($count == 0)
+					echo "     (Can not find password for \"$name\")\n";
+				else {
+					$pass = generatePass();
+					updatePass($dbh, $name, $pass);
+					echo "New password: $pass\n";
+				}
+			}
+		}
+
+		elseif ($command == "kill") {
+			$name = readline("  Account: ");
+			$name = strtolower($name);
+			if ($name == '') {
+				echo "Enter key: ";
+				$key = getKey();
+				if ($key != $privateKey)
+					echo "     (Incorrect key)\n";
+				else {
+					deletePasses($dbh);
+					echo "     (Killed all passwords)\n";
+				}
+			} else {
+				$count = showPass($dbh, $name);
+				if ($count == 0)
+					echo "     (Can not find password for \"$name\")\n";
+				else {
+					deletePass($dbh, $name);
+					echo "     (Killed password for '$name')\n";
+				}
+			}
+		}
+
+	}
+
+	function getKey() {
+	    system('stty -echo');
+	    $key = fgets(STDIN);
+	    system('stty echo');
+	    echo "\n";
+	    return $key;
+	}
+
+	function generatePass() {
+    	$pass = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0123456789";
+		$pass = substr(str_shuffle($pass), 0, 24);
+		$num = rand(1, 5);
+		if ($num == 1) {
+			$pass = substr_replace($pass, "-", 12, 0);
+		} elseif ($num == 2) {
+			$pass = substr_replace($pass, "-", 8, 0);
+			$pass = substr_replace($pass, "-", 17, 0);
+		} elseif ($num == 3) {
+			$pass = substr_replace($pass, "-", 6, 0);
+			$pass = substr_replace($pass, "-", 13, 0);
+			$pass = substr_replace($pass, "-", 20, 0);
+		} elseif ($num == 4) {
+			$pass = substr_replace($pass, "-", 4, 0);
+			$pass = substr_replace($pass, "-", 9, 0);
+			$pass = substr_replace($pass, "-", 14, 0);
+			$pass = substr_replace($pass, "-", 19, 0);
+			$pass = substr_replace($pass, "-", 24, 0);
+		} elseif ($num == 5) {
+			$pass = substr_replace($pass, "-", 3, 0);
+			$pass = substr_replace($pass, "-", 7, 0);
+			$pass = substr_replace($pass, "-", 11, 0);
+			$pass = substr_replace($pass, "-", 15, 0);
+			$pass = substr_replace($pass, "-", 19, 0);
+			$pass = substr_replace($pass, "-", 23, 0);
+			$pass = substr_replace($pass, "-", 27, 0);
+		}
+		return $pass;
+	}
+
+	function insertPass($dbh, $name, $pass) {
+		$pass = encryptPass($pass, $privateKey);
+    	$query = "insert into passwords values ('$name', '$pass', date_trunc('second', now()))";
+		$dbh->query($query);
+		return;
+	}
+
+	function showPass($dbh, $name) {
+    	$query = "select * from passwords where name = '$name'";
+		$i = 0;
+		if ($dbh->query($query)) {
+			foreach($dbh->query($query) as $row) {
+				$row[1] = decryptPass($row[1], $privateKey);
+				echo " Password: $row[1] ($row[2])\n";
+				$i++;
+			}
+		}
+		return $i;
+	}
+
+	function showPasses($dbh) {
+    	$query = "select * from passwords";
+		$i = 0;
+		if ($dbh->query($query)) {
+			foreach($dbh->query($query) as $row) {
+				echo "Encrypted: $row[1] ($row[2]) - $row[0] \n";
+				$i++;
+			}
+		}
+		return $i;
+	}
+
+	function updatePass($dbh, $name, $pass) {
+		$name = strtolower($name);
+		$pass = encryptPass($pass, $privateKey);
+    	$query = "update passwords set pass = '$pass', time = date_trunc('second', now()) where name = '$name'";
+		$dbh->query($query);
+		return;
+	}
+
+	function updatePasses($dbh) {
+		$query = "select * from passwords";
+		if ($dbh->query($query)) {
+			foreach($dbh->query($query) as $row) {
+				$name = $row[0];
+				$pass = decryptPass($row[1], $privateKey);
+				$pass = encryptPass($pass, $newKey1);
+				$query = "update passwords set pass = '$pass', time = date_trunc('second', now()) where name = '$name'";
+				$dbh->query($query);
+			}
+		}
+		return;
+	}
+
+	function deletePass($dbh, $name) {
+		$query = "delete from passwords where name = '$name'";
+		$dbh->query($query);
+		return;
+	}
+
+	function deletePasses($dbh) {
+		$query = "delete from passwords";
+		$dbh->query($query);
+		return;
+	}
+
+	function encryptPass($plainText, $key) {
+		$key = hex2bin($key);
+		$nonceSize = openssl_cipher_iv_length('aes-256-ctr');
+		$nonce = openssl_random_pseudo_bytes($nonceSize);
+		$cipherText = openssl_encrypt($plainText, 'aes-256-ctr', $key, OPENSSL_RAW_DATA, $nonce);
+		return base64_encode($nonce.$cipherText);
+	}
+
+	function decryptPass($cipherText, $key) {
+		$key = hex2bin($key);
+		$cipherText = base64_decode($cipherText);
+		$nonceSize = openssl_cipher_iv_length('aes-256-ctr');
+		$nonce = mb_substr($cipherText, 0, $nonceSize, '8bit');
+		$cipherText = mb_substr($cipherText, $nonceSize, null, '8bit');
+		$plainText = openssl_decrypt($cipherText, 'aes-256-ctr', $key, OPENSSL_RAW_DATA, $nonce);
+		return $plainText;
+	}
+
+?>
