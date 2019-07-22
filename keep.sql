@@ -5,3 +5,9 @@ create table passwords (
 	pass        text not null,
 	"time" 		timestamp
 );
+
+create table privateKey (
+	name        text primary key,
+	key         text not null,
+	"time" 		timestamp
+);

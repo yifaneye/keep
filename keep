@@ -1,25 +1,35 @@
 <?php
-	
-	$privateKey = 1;
 
 	echo "\n------Keep Password Keyrect------\n";
 	echo "          Version 1.0.1\n";
-	echo "Enter key: ";
-	$key = getKey();
-	if ($key != $privateKey) {
-		echo "     (Incorrect key)\n";
-		echo "---------------------------------\n\n";
-		exit;
-	}
-
 	$dbh = new PDO('pgsql:host=localhost;dbname=keep');
+	$ret = getKey($dbh);
+	if ($ret == '0') {
+		$key1 = readline("Set a key: ");
+		$key2 = readline("  Confirm: ");
+		while ($key1 != $key2) {
+			echo "     (Inputs do not match)\n";
+			$key2 = readline("  Confirm: ");
+		}
+		insertKey($dbh, $key1);
+		$pk = (int) $key1;
+	} else {
+		$key1 = readline("Enter key: ");
+		$matches = password_verify($key1, $ret);
+		if (!$matches) {
+			echo "     (Incorrect key)\n";
+			echo "---------------------------------\n\n";
+			exit;
+		}
+		$pk = (int) $key1;
+	}
 
 	echo "      (Keyrect!! Welcome!!)\n";
 
 	while (1) {
 		
 		echo "\n     [keep|kept|change|kill]\n";
-		$command = readline ("  Command: ");
+		$command = readline("  Command: ");
 		$command = strtolower($command);
 		
 		if ($command == "keep") {
@@ -58,15 +68,16 @@
 			$name = readline("  Account: ");
 			$name = strtolower($name);
 			if ($name == '') {
-				echo "  Old key: ";
-				$oldKey = getKey();
-				if ($oldKey == $privateKey) {
+				$oldKey = readline("  Old key: ");
+				$ret = getKey($dbh);
+				$matches = password_verify($oldKey, $ret);
+				if ($matches == true) {
 					$newKey1 = readline("  New key: ");
 					$newKey2 = readline("  Confirm: ");
 					if ($newKey1 == $newKey2) {
-						updatePasses($dbh);
-						$privateKey = $newKey1;
-						echo "     (Updated your key and all passwords)\n";
+						updateKey($dbh, $newKey1);
+						updatePasses($dbh, $oldKey, $newKey1);
+						echo "     (Updated your key and all password hashes)\n";
 					} else
 						echo "     (Inputs do not match)\n";
 				} else
@@ -87,9 +98,10 @@
 			$name = readline("  Account: ");
 			$name = strtolower($name);
 			if ($name == '') {
-				echo "Enter key: ";
-				$key = getKey();
-				if ($key != $privateKey)
+				$key = readline("Enter key: ");
+				$ret = getKey($dbh);
+				$matches = password_verify($key, $ret);
+				if (!$matches)
 					echo "     (Incorrect key)\n";
 				else {
 					deletePasses($dbh);
@@ -108,7 +120,7 @@
 
 	}
 
-	function getKey() {
+	function readKey() {
 	    system('stty -echo');
 	    $key = fgets(STDIN);
 	    system('stty echo');
@@ -148,8 +160,18 @@
 	}
 
 	function insertPass($dbh, $name, $pass) {
-		$pass = encryptPass($pass, $privateKey);
+		$pass = encryptPass($pass);
     	$query = "insert into passwords values ('$name', '$pass', date_trunc('second', now()))";
+		$dbh->query($query);
+		return;
+	}
+
+	function insertKey($dbh, $key) {
+		$options = [
+		    'cost' => 15
+		];
+		$key = password_hash($key, PASSWORD_DEFAULT, $options);
+    	$query = "insert into privatekey values ('keep', '$key', date_trunc('second', now()))";
 		$dbh->query($query);
 		return;
 	}
@@ -159,12 +181,22 @@
 		$i = 0;
 		if ($dbh->query($query)) {
 			foreach($dbh->query($query) as $row) {
-				$row[1] = decryptPass($row[1], $privateKey);
+				$row[1] = decryptPass($row[1]);
 				echo " Password: $row[1] ($row[2])\n";
 				$i++;
 			}
 		}
 		return $i;
+	}
+
+	function getKey($dbh) {
+    	$query = "select * from privatekey";
+		if ($dbh->query($query)) {
+			foreach($dbh->query($query) as $row) {
+				return $row[1];
+			}
+		}
+		return '0';
 	}
 
 	function showPasses($dbh) {
@@ -181,19 +213,30 @@
 
 	function updatePass($dbh, $name, $pass) {
 		$name = strtolower($name);
-		$pass = encryptPass($pass, $privateKey);
+		$pass = encryptPass($pass);
     	$query = "update passwords set pass = '$pass', time = date_trunc('second', now()) where name = '$name'";
 		$dbh->query($query);
 		return;
 	}
 
-	function updatePasses($dbh) {
+	function updateKey($dbh, $key) {
+		$options = [
+		    'cost' => 15
+		];
+		$key = password_hash($key, PASSWORD_DEFAULT, $options);
+    	$query = "update privatekey set key = '$key', time = date_trunc('second', now()) where name = 'keep'";
+		$dbh->query($query);
+		return;
+	}
+
+	function updatePasses($dbh, $oldKey, $newKey) {
 		$query = "select * from passwords";
 		if ($dbh->query($query)) {
 			foreach($dbh->query($query) as $row) {
 				$name = $row[0];
-				$pass = decryptPass($row[1], $privateKey);
-				$pass = encryptPass($pass, $newKey1);
+				$pass = decryptPass($row[1]);
+				$pk = (int) $newKey;
+				$pass = encryptPass($pass);
 				$query = "update passwords set pass = '$pass', time = date_trunc('second', now()) where name = '$name'";
 				$dbh->query($query);
 			}
@@ -213,16 +256,16 @@
 		return;
 	}
 
-	function encryptPass($plainText, $key) {
-		$key = hex2bin($key);
+	function encryptPass($plainText) {
+		$pk = hex2bin($pk);
 		$nonceSize = openssl_cipher_iv_length('aes-256-ctr');
 		$nonce = openssl_random_pseudo_bytes($nonceSize);
 		$cipherText = openssl_encrypt($plainText, 'aes-256-ctr', $key, OPENSSL_RAW_DATA, $nonce);
 		return base64_encode($nonce.$cipherText);
 	}
 
-	function decryptPass($cipherText, $key) {
-		$key = hex2bin($key);
+	function decryptPass($cipherText) {
+		$pk = hex2bin($pk);
 		$cipherText = base64_decode($cipherText);
 		$nonceSize = openssl_cipher_iv_length('aes-256-ctr');
 		$nonce = mb_substr($cipherText, 0, $nonceSize, '8bit');
