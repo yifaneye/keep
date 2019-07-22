@@ -1,32 +1,34 @@
 <?php
 
 	echo "\n------Keep Password Keyrect------\n";
-	echo "          Version 1.0.1\n";
+	echo "          Version 1.1.2\n";
+	
 	$dbh = new PDO('pgsql:host=localhost;dbname=keep');
+	
 	$ret = getKey($dbh);
-	if ($ret == '0') {
+	if ($ret == '') {
 		$key1 = readline("Set a key: ");
 		$key2 = readline("  Confirm: ");
 		while ($key1 != $key2) {
 			echo "     (Inputs do not match)\n";
 			$key2 = readline("  Confirm: ");
 		}
-		insertKey($dbh, $key1);
 		$pk = (int) $key1;
+		insertKey($dbh, $key1);
 	} else {
 		$key1 = readline("Enter key: ");
 		$matches = password_verify($key1, $ret);
 		if (!$matches) {
-			echo "     (Incorrect key)\n";
+			echo "         (Incorrect key)\n";
 			echo "---------------------------------\n\n";
 			exit;
 		}
 		$pk = (int) $key1;
 	}
 
-	echo "      (Keyrect!! Welcome!!)\n";
+	echo "\n      (Keyrect!!! Welcome!)\n";
 
-	while (1) {
+	while ($command != "quit" && $command != "exit") {
 		
 		echo "\n     [keep|kept|change|kill]\n";
 		$command = readline("  Command: ");
@@ -44,9 +46,8 @@
 					$pass = generatePass();
 					insertPass($dbh, $name, $pass);
 					echo " Password: $pass\n";
-				} else {
+				} else
 					echo "     (Password already existed for \"$name\")\n";
-				}
 			}
 		}
 
@@ -120,6 +121,10 @@
 
 	}
 
+	echo "---------------------------------\n\n";
+
+
+
 	function readKey() {
 	    system('stty -echo');
 	    $key = fgets(STDIN);
@@ -168,7 +173,7 @@
 
 	function insertKey($dbh, $key) {
 		$options = [
-		    'cost' => 15
+			'cost' => 14
 		];
 		$key = password_hash($key, PASSWORD_DEFAULT, $options);
     	$query = "insert into privatekey values ('keep', '$key', date_trunc('second', now()))";
@@ -196,7 +201,7 @@
 				return $row[1];
 			}
 		}
-		return '0';
+		return '';
 	}
 
 	function showPasses($dbh) {
@@ -221,7 +226,7 @@
 
 	function updateKey($dbh, $key) {
 		$options = [
-		    'cost' => 15
+			'cost' => 14
 		];
 		$key = password_hash($key, PASSWORD_DEFAULT, $options);
     	$query = "update privatekey set key = '$key', time = date_trunc('second', now()) where name = 'keep'";
