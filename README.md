@@ -6,11 +6,11 @@ This is a password manager written in PHP with PostgreSQL.
 
 1. Clone from this directory
 ```
+cd ~
 git clone https://github.com/ayfallen/keep.git
 ```
 
-2. Download Postgres.app for Mac from
-https://postgresapp.com/downloads.html
+2. Download Postgres.app for Mac from https://postgresapp.com/downloads.html
 
 3. Install Postgres.app
 
@@ -20,30 +20,23 @@ https://postgresapp.com/downloads.html
 
 6. Load contents from keep.sql to PostgreSQL server
 ```
-\i ~Downloads/keep/keep.sql
+\i ~/keep/keep.sql
 ```
 
-7. Change your $privateKey in keep
-
-8. Execute the PHP file
+7. Execute the PHP file
 ```
-cd ~~/Downloads
-php keep
-
-OR
-
-php ~/Downloads/keep
+php keep/keep
 ```
 
 9. (Save the path in your home directory)
 ```
 nano .~/bash_profile
-alias keep='php ~/Downloads/keep/keep'
-'control' + 'X'
+alias keep='php ~/keep/keep'
+'control key' + 'X key'
 source .~/bash_profile
 ```
 
-10. (Execute the PHP file)
+10. (Execute the PHP file anywhere)
 ```
 keep
 ```
