@@ -1,10 +1,16 @@
 <?php
 
 	echo "\n------Keep Password Keyrect------\n";
-	echo "          Version 1.1.2\n";
+	echo "          Version 1.2.0\n";
 	
 	$dbh = new PDO('pgsql:host=localhost;dbname=keep');
 	
+	// $to = "";
+	// $from = "";
+	// $message = "verification code\n";
+	// $headers = "From: $from\n";
+	// mail($to, '[keep] verification code', $message, $headers);
+
 	$ret = getKey($dbh);
 	if ($ret == '') {
 		$key1 = readline("Set a key: ");
@@ -32,10 +38,13 @@
 		
 		echo "\n     [keep|kept|change|kill]\n";
 		$command = readline("  Command: ");
+		$command = trim($command);
 		$command = strtolower($command);
 		
 		if ($command == "keep") {
 			$name = readline("  Account: ");
+			$name = trim($name);
+			if (!isValidName($command, $name)) continue;
 			$name = strtolower($name);
 			if ($name == '') {
 				$pass = generatePass();
@@ -53,6 +62,8 @@
 
 		elseif ($command == "kept") {
 			$name = readline("  Account: ");
+			$name = trim($name);
+			if (!isValidName($command, $name)) continue;
 			$name = strtolower($name);
 			if ($name == '') {
 				$count = showPasses($dbh);
@@ -67,12 +78,14 @@
 
 		elseif ($command == "change") {
 			$name = readline("  Account: ");
+			$name = trim($name);
+			if (!isValidName($command, $name)) continue;
 			$name = strtolower($name);
 			if ($name == '') {
 				$oldKey = readline("  Old key: ");
 				$ret = getKey($dbh);
 				$matches = password_verify($oldKey, $ret);
-				if ($matches == true) {
+				if ($matches) {
 					$newKey1 = readline("  New key: ");
 					$newKey2 = readline("  Confirm: ");
 					if ($newKey1 == $newKey2) {
@@ -97,6 +110,8 @@
 
 		elseif ($command == "kill") {
 			$name = readline("  Account: ");
+			$name = trim($name);
+			if (!isValidName($command, $name)) continue;
 			$name = strtolower($name);
 			if ($name == '') {
 				$key = readline("Enter key: ");
@@ -131,6 +146,19 @@
 	    system('stty echo');
 	    echo "\n";
 	    return $key;
+	}
+
+	function isValidName($command, $name) {
+		if (substr_count($name, "'") > 1) {
+			if ($command == "keep") {
+				echo "     (Can not keep password for \"$name\")\n"; 
+				echo "     (Please try another name for \"$name\")\n";
+			} else {
+				echo "     (Can not find password for \"$name\")\n"; 
+			}
+			return false;
+		}
+		return true;
 	}
 
 	function generatePass() {

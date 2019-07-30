@@ -2,6 +2,8 @@
 
 This is a password manager written in PHP with PostgreSQL.
 
+Youtube: http://youtu.be/nr0iOl2HtNM
+
 ## Getting Started
 
 1. Clone from this directory

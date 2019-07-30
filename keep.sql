@@ -1,8 +1,8 @@
+create database keep;
+
 drop table passwords;
 
 drop table privateKey;
-
-create database keep;
 
 create table passwords (
 	name        text primary key,
