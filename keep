@@ -1,6 +1,6 @@
 <?php
 
-	echo " 
+	echo "
            ____
           / __ \____/\__/\
  _   __  | |__| _________/      _   
@@ -9,8 +9,9 @@
 |    \ / _ \ | | | '__/ _ \/ __| __|
 | |\  Keyrect: Keep Passwords__| |_ 
 \_| \_/\___|\__, |_|  \___|\___|\__|
-           Version 1.3.0
-            |___/\n\n
+             _v1.3.0
+            |___/\n
+
 ";
 
     $dbh = new PDO('pgsql:host=localhost;dbname=keep');
@@ -18,19 +19,24 @@
 	$ret = getKey($dbh);
 	if ($ret == '') {
 		$key = readline("Set a key: ");
+		$key = trim($key);
 		$key2 = readline("  Confirm: ");
+		$key = trim($key2);
 		while ($key != $key2) {
 			echo "(Two inputs do not match)\n";
 			$key2 = readline("  Confirm: ");
+			$key2 = trim($key2);
 		}
 		insertKey($dbh, $key);
 		echo "\n     (Welcome to Keyrect!)\n";
 	} else {
 		$key = readline("Enter key: ");
+		$key = trim($key);
 		$matches = password_verify($key, $ret);
 		while (!password_verify($key, $ret)) {
 			echo "(Incorrect key)\n";
 			$key = readline("Enter key: ");
+			$key = trim($key);
 		}
 		echo "\n     (Welcome back to Keyrect!)\n";
 	}
@@ -95,9 +101,12 @@
 		elseif ($command == "change") {
 			if ($name == '') {
 				$key = readline("  Old key: ");
+				$key = trim($key);
 				if (password_verify($key, $ret)) {
 					$key1 = readline("  New key: ");
+					$key1 = trim($key1);
 					$key2 = readline("  Confirm: ");
+					$key2 = trim($key2);
 					while ($key1 != $key2) {
 						echo "(Two inputs do not match)\n";
 						$key2 = readline("  Confirm: ");
@@ -124,8 +133,10 @@
 		elseif ($command == "delete") {
 			if ($name == '') {
 				$key = readline("Enter key: ");
+				$key = trim($key);
 				$matches = password_verify($key, $ret);
 				$key = readline("  Comfirm: ");
+				$key = trim($key);
 				$matches = password_verify($key, $ret);
 				if (!$matches)
 					echo "(Incorrect key)\n";
