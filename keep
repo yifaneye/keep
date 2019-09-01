@@ -2,7 +2,7 @@
 
 	echo " 
            ____
-          / __ \___/\__/\_
+          / __ \____/\__/\
  _   __  | |__| _________/      _   
 | | / /   \____/               | |  
 | |/ /  ___ _   _ _ __ ___  ___| |_ 
@@ -74,8 +74,9 @@
 					$pass = generatePass();
 					insertPass($dbh, $name, $pass);
 					echo " Password: $pass\n";
+					echo "(Inserted password for '$name')\n";
 				} else 
-					echo "(Password already existed for \"$name\")\n";
+					echo "(Password already existed for '$name')\n";
 			}
 		}
 
@@ -87,7 +88,7 @@
 			} else {
 				$count = showPass($dbh, $name);
 				if ($count == 0) 
-					echo "(Can not find password for \"$name\")\n";
+					echo "(Can not find password for '$name')\n";
 			}
 		}
 
@@ -104,17 +105,18 @@
 					updatePasses($dbh, $key, $key1);
 					$key = $key1;
 					updateKey($dbh, $key);
-					echo "(Updated your key and all encrypted passwords)\n";
+					echo "(Updated your key and encrypted all passwords)\n";
 				} else 
 					echo "(Incorrect key)\n";
 			} else {
 				$count = showPass($dbh, $name);
 				if ($count == 0) 
-					echo "(Can not find password for \"$name\")\n";
+					echo "(Can not find password for '$name')\n";
 				else {
 					$pass = generatePass();
 					updatePass($dbh, $name, $pass);
 					echo "New password: $pass\n";
+					echo "(Updated password for '$name')\n";
 				}
 			}
 		}
@@ -122,6 +124,8 @@
 		elseif ($command == "delete") {
 			if ($name == '') {
 				$key = readline("Enter key: ");
+				$matches = password_verify($key, $ret);
+				$key = readline("  Comfirm: ");
 				$matches = password_verify($key, $ret);
 				if (!$matches)
 					echo "(Incorrect key)\n";
@@ -132,10 +136,10 @@
 			} else {
 				$count = showPass($dbh, $name);
 				if ($count == 0)
-					echo "(Can not find password for \"$name\")\n";
+					echo "(Can not find password for '$name')\n";
 				else {
 					deletePass($dbh, $name);
-					echo "(Deleted password for \"$name\")\n";
+					echo "(Deleted password for '$name')\n";
 				}
 			}
 		}
@@ -147,10 +151,10 @@
 	function isValidName($command, $name) {
 		if (substr_count($name, "'") >= 2) {
 			if ($command == "keep") {
-				echo "(Can not keep password for \"$name\")\n"; 
-				echo "(Please try another name for \"$name\")\n";
+				echo "(Can not keep password for '$name')\n"; 
+				echo "(Please try another name for '$name')\n";
 			} else
-				echo "(Can not find password for \"$name\")\n";
+				echo "(Can not find password for '$name')\n";
 			return false;
 		}
 		return true;
@@ -240,7 +244,7 @@
 		$i = 0;
 		if ($dbh->query($query)) {
 			foreach($dbh->query($query) as $row) {
-				echo "Encrypted: $row[1] ($row[2]) - $row[0] \n";
+				echo "Encrypted: $row[1] ($row[2]) - $row[0]\n";
 				$i++;
 			}
 		}
