@@ -1,27 +1,25 @@
 <?php
 
-	echo "
-           ____
-          / __ \____/\__/\
- _   __  | |__| _________/      _   
-| | / /   \____/               | |  
+	echo "                           __ 
+          ____            |  |
+         / __ \____/\/\/\ |/\|
+ _   __ | |__| _________/ |\/|  _   
+| | / /  \____/           |__| | |  
 | |/ /  ___ _   _ _ __ ___  ___| |_ 
 |    \ / _ \ | | | '__/ _ \/ __| __|
 | |\  Keyrect: Keep Passwords__| |_ 
 \_| \_/\___|\__, |_|  \___|\___|\__|
-             _v1.3.0
-            |___/\n
+       Version 1.3.0
+        |___/\n\n";
 
-";
-
-    $dbh = new PDO('pgsql:host=localhost;dbname=keep');
+	$dbh = new PDO('pgsql:host=localhost;dbname=keep');
 
 	$ret = getKey($dbh);
 	if ($ret == '') {
 		$key = readline("Set a key: ");
 		$key = trim($key);
 		$key2 = readline("  Confirm: ");
-		$key = trim($key2);
+		$key2 = trim($key2);
 		while ($key != $key2) {
 			echo "(Two inputs do not match)\n";
 			$key2 = readline("  Confirm: ");
@@ -32,7 +30,6 @@
 	} else {
 		$key = readline("Enter key: ");
 		$key = trim($key);
-		$matches = password_verify($key, $ret);
 		while (!password_verify($key, $ret)) {
 			echo "(Incorrect key)\n";
 			$key = readline("Enter key: ");
@@ -40,13 +37,6 @@
 		}
 		echo "\n     (Welcome back to Keyrect!)\n";
 	}
-
-	// For 2FA
-	// $to = "";
-	// $from = "";
-	// $message = "verification code\n";
-	// $headers = "From: $from\n";
-	// mail($to, '[Keyrect] verification code', $message, $headers);
 
 	echo "\n Commands:";
 	echo "\n     [keep] auto-generated password";
@@ -102,6 +92,7 @@
 			if ($name == '') {
 				$key = readline("  Old key: ");
 				$key = trim($key);
+				$ret = getKey($dbh);
 				if (password_verify($key, $ret)) {
 					$key1 = readline("  New key: ");
 					$key1 = trim($key1);
@@ -112,8 +103,8 @@
 						$key2 = readline("  Confirm: ");
 					}
 					updatePasses($dbh, $key, $key1);
+					updateKey($dbh, $key1);
 					$key = $key1;
-					updateKey($dbh, $key);
 					echo "(Updated your key and encrypted all passwords)\n";
 				} else 
 					echo "(Incorrect key)\n";
@@ -134,11 +125,7 @@
 			if ($name == '') {
 				$key = readline("Enter key: ");
 				$key = trim($key);
-				$matches = password_verify($key, $ret);
-				$key = readline("  Comfirm: ");
-				$key = trim($key);
-				$matches = password_verify($key, $ret);
-				if (!$matches)
+				if (!password_verify($key, $ret))
 					echo "(Incorrect key)\n";
 				else {
 					deletePasses($dbh);
@@ -156,7 +143,6 @@
 		}
 
 	}
-
 
 	// Prevention from SOL Injection Attacks
 	function isValidName($command, $name) {
@@ -180,7 +166,7 @@
 	// }
 
 	function generatePass() {
-    	$pass = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0123456789";
+		$pass = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0123456789";
 		$pass = substr(str_shuffle($pass), 0, 24);
 		// $num = rand(1, 5);
 		// if ($num == 1) {
@@ -210,25 +196,8 @@
 		return $pass;
 	}
 
-	function insertKey($dbh, $key) {
-		$options = [
-			'cost' => 10
-		];
-		$key = password_hash($key, PASSWORD_DEFAULT, $options);
-    	$query = "insert into privatekey values ('keep', '$key', date_trunc('second', now()))";
-		$dbh->query($query);
-		return;
-	}
-
-	function insertPass($dbh, $name, $pass) {
-		$pass = encryptPass($pass);
-    	$query = "insert into passwords values ('$name', '$pass', date_trunc('second', now()))";
-		$dbh->query($query);
-		return;
-	}
-
 	function getKey($dbh) {
-    	$query = "select * from privatekey";
+		$query = "select * from privatekey";
 		if ($dbh->query($query)) {
 			foreach($dbh->query($query) as $row) {
 				return $row[1];
@@ -237,8 +206,29 @@
 		return '';
 	}
 
+	function insertKey($dbh, $key) {
+		$key = password_hash($key, PASSWORD_DEFAULT, array('cost' => 10));
+		$query = "insert into privatekey values ('keep', '$key', date_trunc('second', now()))";
+		$dbh->query($query);
+		return;
+	}
+
+	function updateKey($dbh, $key) {
+		$key = password_hash($key, PASSWORD_DEFAULT, array('cost' => 10));
+		$query = "update privatekey set key = '$key', time = date_trunc('second', now()) where name = 'keep'";
+		$dbh->query($query);
+		return;
+	}
+
+	function insertPass($dbh, $name, $pass) {
+		$pass = encryptPass($pass);
+		$query = "insert into passwords values ('$name', '$pass', date_trunc('second', now()))";
+		$dbh->query($query);
+		return;
+	}
+
 	function showPass($dbh, $name) {
-    	$query = "select * from passwords where name = '$name'";
+		$query = "select * from passwords where name = '$name'";
 		$i = 0;
 		if ($dbh->query($query)) {
 			foreach($dbh->query($query) as $row) {
@@ -251,7 +241,7 @@
 	}
 
 	function showPasses($dbh) {
-    	$query = "select * from passwords";
+		$query = "select * from passwords";
 		$i = 0;
 		if ($dbh->query($query)) {
 			foreach($dbh->query($query) as $row) {
@@ -262,20 +252,10 @@
 		return $i;
 	}
 
-	function updateKey($dbh, $key) {
-		$options = [
-			'cost' => 10
-		];
-		$key = password_hash($key, PASSWORD_DEFAULT, $options);
-    	$query = "update privatekey set key = '$key', time = date_trunc('second', now()) where name = 'keep'";
-		$dbh->query($query);
-		return;
-	}
-
 	function updatePass($dbh, $name, $pass) {
 		$name = strtolower($name);
 		$pass = encryptPass($pass);
-    	$query = "update passwords set pass = '$pass', time = date_trunc('second', now()) where name = '$name'";
+		$query = "update passwords set pass = '$pass', time = date_trunc('second', now()) where name = '$name'";
 		$dbh->query($query);
 		return;
 	}
