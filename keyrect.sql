@@ -4,12 +4,12 @@ drop table privatekey;
 
 create table passwords (
 	name        text primary key,
-	pass        text,
+	acct        text,
 	"time" 		timestamp
 );
 
-create table privatekey (
-	name        text primary key,
+create table keys (
+	usr         text primary key,
 	key         text,
 	"time" 		timestamp
 );
