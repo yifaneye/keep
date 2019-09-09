@@ -1,16 +1,17 @@
 <?php
 
-	echo "                          __ 
-           ___           |  |
-          / _ \___/\/\/\ |/\|
- _   __  | |_| ________/ |\/|   _   
-| | / /   \___/          |__|  | |  
+	echo "
+           __                       
+          |..|           ___        
+          |/\|  /\/\/\__/ _ \       
+ _   __   |\/|  \_______ |_| |  _   
+| | / /   |__|          \___/  | |  
 | |/ /  ___ _   _ _ __ ___  ___| |_ 
 |    \ / _ \ | | | '__/ _ \/ __| __|
 | |\  Keyrect: Keep Passwords__| |_ 
 \_| \_/\___|\__, |_|  \___|\___|\__|
-       Version 1.3.0
-        |___/\n\n";
+           Version 1.3.1            
+            |___/                   \n\n";
 
 $dbh = new PDO('pgsql:host=localhost;dbname=keyrect');
 
@@ -35,7 +36,7 @@ if ($ret == '') {
 	$key = trim($key);
 	while (!password_verify($key, $ret)) {
 		echo "(Incorrect key)\n";
-		$key = readline("Enter key: ");
+		$key = readline("      Key: ");
 		$key = trim($key);
 	}
 	echo "\n     (Welcome back to Keyrect!)\n";
