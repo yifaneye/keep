@@ -1,10 +1,10 @@
 <?php
 
-	echo "                           __ 
-          ____            |  |
-         / __ \____/\/\/\ |/\|
- _   __ | |__| _________/ |\/|  _   
-| | / /  \____/           |__| | |  
+	echo "                          __ 
+           ___           |  |
+          / _ \___/\/\/\ |/\|
+ _   __  | |_| ________/ |\/|   _   
+| | / /   \___/          |__|  | |  
 | |/ /  ___ _   _ _ __ ___  ___| |_ 
 |    \ / _ \ | | | '__/ _ \/ __| __|
 | |\  Keyrect: Keep Passwords__| |_ 
@@ -12,7 +12,7 @@
        Version 1.3.0
         |___/\n\n";
 
-$dbh = new PDO('pgsql:host=localhost;dbname=keep');
+$dbh = new PDO('pgsql:host=localhost;dbname=keyrect');
 
 $ret = getKey($dbh);
 if ($ret == '') {

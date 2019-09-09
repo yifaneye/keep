@@ -1,46 +1,30 @@
-# Keep Password Keyrect
+# Keyrect: Keep Passwords
 
 This is a password manager written in PHP with PostgreSQL.
 
-Youtube: http://youtu.be/nr0iOl2HtNM
+Youtube: http://youtu.be/nr0iOl2HtNM (v1.1.2)
 
 ## Getting Started
 
-1. Clone from this directory
+1. Download Postgres.app from https://postgresapp.com/downloads.html
+
+2. Load contents to the PostgreSQL server
 ```
-cd ~
-git clone https://github.com/ayfallen/keep.git
-```
-
-2. Download Postgres.app for Mac from https://postgresapp.com/downloads.html
-
-3. Install Postgres.app
-
-4. Open Postgres.app
-
-5. Start the PostgreSQL server in Postgres.app
-
-6. Load contents from keep.sql to PostgreSQL server
-```
-\i ~/keep/keep.sql
+create database keyrect
+\i keyrect.sql
 ```
 
-7. Execute the PHP file
+3. Execute the php file
 ```
-php keep/keep
+php keyrect
 ```
 
-9. (Save the path in your home directory)
+4. (Execute the php file anywhere)
 ```
-nano .~/bash_profile
-alias keep='php ~/keep/keep'
-'control key' + 'X key'
+nano ~/.bash_profile
+alias keyrect='php ~/keyrect/keyrect'
 source .~/bash_profile
-```
-
-10. (Execute the PHP file anywhere)
-```
-keep
+keyrect
 ```
 
 ## Feedbacks

@@ -1,17 +1,15 @@
-create database keep;
-
 drop table passwords;
 
-drop table privateKey;
+drop table privatekey;
 
 create table passwords (
 	name        text primary key,
-	pass        text not null,
+	pass        text,
 	"time" 		timestamp
 );
 
-create table privateKey (
+create table privatekey (
 	name        text primary key,
-	key         text not null,
+	key         text,
 	"time" 		timestamp
 );
