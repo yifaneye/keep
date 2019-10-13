@@ -10,7 +10,7 @@
 |    \ / _ \ | | | '__/ _ \/ __| __|
 | |\  Keyrect: Keep Passwords__| |_ 
 \_| \_/\___|\__, |_|  \___|\___|\__|
-           Version 1.3.1            
+           Version 1.4.0            
             |___/                   \n\n";
 
 $dbh = new PDO('pgsql:host=localhost;dbname=keyrect');
@@ -32,7 +32,8 @@ if ($ret == '') {
 	echo "\n     (Welcome to Keyrect!)\n";
 } else {
 	echo "(Sign in)\n";
-	$key = readline("      Key: ");
+	echo "      Key: ";
+	$key = readKey();
 	$key = trim($key);
 	while (!password_verify($key, $ret)) {
 		echo "(Incorrect key)\n";
@@ -96,7 +97,7 @@ while (1) {
 		if ($acct == '') {
 			$key = readline("  Old key: ");
 			$key = trim($key);
-			$ret = getKey($dbh);
+			$ret = getKey($dbh, $usr);
 			if (password_verify($key, $ret)) {
 				$key1 = readline("  New key: ");
 				$key1 = trim($key1);
@@ -117,7 +118,7 @@ while (1) {
 			if ($count == 0) 
 				echo "(Can not find password for '$acct')\n";
 			else {
-				$pass = generatePass();
+				$pass = readline("BYO password: ");
 				updatePass($dbh, $acct, $pass);
 				echo "New password: $pass\n";
 				echo "(Updated password for '$acct')\n";
@@ -146,6 +147,14 @@ while (1) {
 		}
 	}
 
+}
+
+function readKey() {
+    system('stty -echo');
+    $key = fgets(STDIN);
+    system('stty echo');
+    echo "\n";
+    return $key;
 }
 
 // Prevention from SOL Injection Attacks
@@ -209,7 +218,7 @@ function showPass($dbh, $acct) {
 	if ($dbh->query($query)) {
 		foreach($dbh->query($query) as $row) {
 			$row[1] = decryptPass($row[1]);
-			echo "Password: $row[1] ($row[2])\n";
+			echo " Password: $row[1] ($row[2])\n";
 			$i++;
 		}
 	}
