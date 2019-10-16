@@ -1,6 +1,6 @@
 drop table passwords;
 
-drop table privatekey;
+drop table keys;
 
 create table passwords (
 	acct        text primary key,
