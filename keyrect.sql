@@ -3,8 +3,8 @@ drop table passwords;
 drop table privatekey;
 
 create table passwords (
-	name        text primary key,
-	acct        text,
+	acct        text primary key,
+	pass        text,
 	"time" 		timestamp
 );
 
