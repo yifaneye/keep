@@ -10,7 +10,7 @@
 |    \ / _ \ | | | '__/ _ \/ __| __|
 | |\  Keyrect: Keep Passwords__| |_ 
 \_| \_/\___|\__, |_|  \___|\___|\__|
-           Version 1.4.0            
+           Version 1.4.1            
             |___/                   \n\n";
 
 $dbh = new PDO('pgsql:host=localhost;dbname=keyrect');
@@ -157,9 +157,9 @@ function readKey() {
     return $key;
 }
 
-// Prevention from SOL Injection Attacks
+// Prevention from SQL Injection Attacks
 function isValidName($command, $acct) {
-	if (substr_count($acct, "'") >= 2) {
+	if (substr_count($acct, "'") >= 2 || substr_count($acct, "-") >= 2) {
 		if ($command == "keep") {
 			echo "(Can not keep password for '$acct')\n"; 
 			echo "(Please try another name for '$acct')\n";
